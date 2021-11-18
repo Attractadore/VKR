@@ -52,7 +52,7 @@ VkResult VKR_CreatePipeline(
         {VK_SHADER_STAGE_VERTEX_BIT, VK_SHADER_STAGE_FRAGMENT_BIT};
     VkPipelineShaderStageCreateInfo shader_create_infos[2];
     for (unsigned i = 0; i < 2; i++) {
-        shader_create_infos[i] = (VkPipelineShaderStageCreateInfo) {
+        shader_create_infos[i] = VkPipelineShaderStageCreateInfo{
             .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO,
             .stage = shader_stages[i],
             .module = shader_modules[i],

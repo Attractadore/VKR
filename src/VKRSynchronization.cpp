@@ -22,7 +22,7 @@ VkResult VKR_CreateFences(VkFence* fences, unsigned num_fences, bool signaled) {
     for (unsigned i = 0; i < num_fences; i++) {
         VkFenceCreateInfo create_info = {
             .sType = STYPE(create_info),
-            .flags = signaled ? VK_FENCE_CREATE_SIGNALED_BIT : VkFenceCreateFlagBits{},
+            .flags = signaled ? VK_FENCE_CREATE_SIGNALED_BIT : VkFenceCreateFlags{},
         };
         res = vkCreateFence(vkr.device, &create_info, NULL, &fences[i]);
         if (res < 0) {

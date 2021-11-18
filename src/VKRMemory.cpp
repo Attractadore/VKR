@@ -27,10 +27,15 @@ static VkResult allocateMemory(
     int memory_type_idx =
         getMemoryTypeIndex(requirements->memoryTypeBits, flags);
 
+    if (memory_type_idx < 0) {
+        return VK_ERROR_FEATURE_NOT_PRESENT;
+    }
+
     VkMemoryAllocateInfo memory_allocate_info = {
         .sType = STYPE(memory_allocate_info),
         .allocationSize = requirements->size,
-        .memoryTypeIndex = memory_type_idx,
+        .memoryTypeIndex =
+            static_cast<uint32_t>(memory_type_idx),
     };
     return vkAllocateMemory(vkr.device, &memory_allocate_info, NULL, memory);
 }
@@ -42,7 +47,7 @@ static VkResult createBuffer(
 ) {
     size = std::max(size, 1u);
     VkResult res = VK_SUCCESS;
-    *buffer = (VKRBuffer) {
+    *buffer = VKRBuffer{
         .buf = VK_NULL_HANDLE,
         .mem = VK_NULL_HANDLE,
     };
@@ -191,7 +196,7 @@ fail:
 
 VkResult VKR_CreateImage(VkExtent2D extent, VkFormat format, VKRImage* image) {
     VkResult res = VK_SUCCESS;
-    *image = (VKRImage) {
+    *image = VKRImage{
         .img = VK_NULL_HANDLE,
         .mem = VK_NULL_HANDLE,
     };

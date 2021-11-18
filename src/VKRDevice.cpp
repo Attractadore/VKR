@@ -258,7 +258,8 @@ static VkResult VKR_CreateLogicalDevice() {
     float priority = 1.0f;
     VkDeviceQueueCreateInfo queue_create_info = {
         .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-        .queueFamilyIndex = vkr.queue_families.graphics,
+        .queueFamilyIndex =
+            static_cast<uint32_t>(vkr.queue_families.graphics),
         .queueCount = 1,
         .pQueuePriorities = &priority,
     };

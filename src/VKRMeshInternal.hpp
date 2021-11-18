@@ -3,6 +3,8 @@
 #include "VKRMesh.hpp"
 #include "VKRMemory.hpp"
 
+#include <array>
+
 namespace VKR {
 class Mesh {
 protected:

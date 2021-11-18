@@ -9,7 +9,8 @@ VkResult VKR_CreateCommandPools() {
         VkCommandPoolCreateInfo create_info = {
             .sType = STYPE(create_info),
             .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-            .queueFamilyIndex = vkr.queue_families.graphics,
+            .queueFamilyIndex =
+                static_cast<uint32_t>(vkr.queue_families.graphics),
         };
         res = vkCreateCommandPool(vkr.device, &create_info, NULL, &vkr.command_pool);
         if (res < 0) { goto fail; }
@@ -18,7 +19,8 @@ VkResult VKR_CreateCommandPools() {
     {
         VkCommandPoolCreateInfo create_info = {
             .sType = STYPE(create_info),
-            .queueFamilyIndex = vkr.queue_families.graphics,
+            .queueFamilyIndex =
+                static_cast<uint32_t>(vkr.queue_families.graphics),
         };
         res = vkCreateCommandPool(vkr.device, &create_info, NULL, &vkr.copy_pool);
         if (res < 0) { goto fail; }
