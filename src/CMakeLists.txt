@@ -1,8 +1,5 @@
 find_package(Vulkan REQUIRED)
 find_package(glm REQUIRED)
-if (NOT TARGET glm::glm)
-    add_library(glm::glm ALIAS glm)
-endif()
 
 add_library(VKR
     VKR.cpp
