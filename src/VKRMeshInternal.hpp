@@ -58,7 +58,7 @@ public:
 };
 
 class StreamingMesh final: public Mesh {
-    static constexpr size_t num_streaming_frames = 4;
+    static constexpr unsigned num_streaming_frames = 4;
 
     std::array<VkFence, num_streaming_frames> fences;
     VKRTriangle* mapped_data;
