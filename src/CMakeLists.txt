@@ -17,8 +17,9 @@ set(VKR_SOURCES
     Mesh.cpp
     Model.cpp
     Scene.cpp
+    Surface.cpp
+    Swapchain.cpp
     Sync.cpp
-    WSISwapchain.cpp
 )
 
 add_library(VKR

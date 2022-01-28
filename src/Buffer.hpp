@@ -95,6 +95,7 @@ void copyBuffer(
     VkDevice device,
     VkQueue queue,
     VkBuffer from, VkBuffer to,
+    VkDeviceSize size, VkDeviceSize src_offset, VkDeviceSize dst_offset,
     VkCommandPool cmd_pool
 );
 }

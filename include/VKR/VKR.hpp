@@ -36,10 +36,15 @@ class Instance;
 class GraphicsDevice;
 class GraphicsDeviceConnection;
 
+class WSISurface;
 class ISwapchain;
 class IWSISwapchain;
 
 class Scene;
+};
+
+struct InstanceCreationFeatures {
+    std::span<const char* const> wsi_extensions;
 };
 
 class Instance {
@@ -48,11 +53,11 @@ protected:
     std::unique_ptr<Impl> pimpl;
 
 public:
-    Instance(std::span<const char* const> extensions);
+    Instance(const InstanceCreationFeatures& conf);
     ~Instance();
 
     uint32_t getGraphicsDeviceCount() const;
-    const GraphicsDevice& getGraphicsDevice(uint32_t dev_idx) const;
+    GraphicsDevice& getGraphicsDevice(uint32_t dev_idx);
 
     Vulkan::Instance& vulkanAPI() {
         return reinterpret_cast<Vulkan::Instance&>(*this);
@@ -70,7 +75,11 @@ struct GraphicsDeviceConnectionFeatures {
 
 class GraphicsDevice {
 protected:
-    GraphicsDevice() {}
+    GraphicsDevice() = default;
+    GraphicsDevice(const GraphicsDevice& other) = default;
+    GraphicsDevice(GraphicsDevice&& other) = default;
+    GraphicsDevice& operator=(const GraphicsDevice& other) = default;
+    GraphicsDevice& operator=(GraphicsDevice&& other) = default;
 
 public:
     std::string name() const;
@@ -91,7 +100,11 @@ public:
 
 class GraphicsDeviceConnection {
 protected:
-    GraphicsDeviceConnection() {}
+    GraphicsDeviceConnection() = default;
+    GraphicsDeviceConnection(const GraphicsDeviceConnection& other) = default;
+    GraphicsDeviceConnection(GraphicsDeviceConnection&& other) = default;
+    GraphicsDeviceConnection& operator=(const GraphicsDeviceConnection& other) = default;
+    GraphicsDeviceConnection& operator=(GraphicsDeviceConnection&& other) = default;
 
 public:
     Scene& createScene(
@@ -109,7 +122,7 @@ public:
 
 struct Camera {
     float m_aspect_ratio;
-    float m_hfov;
+    float m_vfov;
     glm::vec3 m_position;
     glm::vec3 m_forward;
     glm::vec3 m_up;
@@ -117,7 +130,11 @@ struct Camera {
 
 class Scene {
 protected:
-    Scene() {}
+    Scene() = default;
+    Scene(const Scene& other) = default;
+    Scene(Scene&& other) = default;
+    Scene& operator=(const Scene& other) = default;
+    Scene& operator=(Scene&& other) = default;
 
 public:
     Camera m_camera;
@@ -166,13 +183,5 @@ public:
     void setViewport(uint32_t width, uint32_t height);
 
     void draw(Vulkan::ISwapchain* swapchain);
-
-    Vulkan::Scene& vulkanAPI() {
-        return reinterpret_cast<Vulkan::Scene&>(*this);
-    }
-
-    const Vulkan::Scene& vulkanAPI() const {
-        return reinterpret_cast<const Vulkan::Scene&>(*this);
-    }
 };
 }

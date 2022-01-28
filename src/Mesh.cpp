@@ -9,7 +9,12 @@ void StaticMesh::create(
     auto staging_buffer = createStagingBuffer(allocator, vertices.size_bytes());
     copyToStagingBuffer(allocator, vertices, staging_buffer.allocation);
     buffer = createStaticBuffer(allocator, vertices.size_bytes());
-    copyBuffer(device, graphics_queue, staging_buffer.buffer, buffer.buffer, cmd_pool);
+    copyBuffer(
+        device, graphics_queue,
+        staging_buffer.buffer, buffer.buffer,
+        vertices.size_bytes(), 0, 0,
+        cmd_pool
+    );
     vertex_count = vertices.size();
     staging_buffer.destroy(allocator);
 }

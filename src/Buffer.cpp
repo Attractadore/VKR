@@ -50,6 +50,7 @@ void copyBuffer(
     VkDevice device,
     VkQueue queue,
     VkBuffer from, VkBuffer to,
+    VkDeviceSize size, VkDeviceSize src_offset, VkDeviceSize dst_offset,
     VkCommandPool cmd_pool
 ) {
     VkCommandBufferAllocateInfo send_cmd_buffer_alloc_info = {
@@ -69,7 +70,9 @@ void copyBuffer(
     vkBeginCommandBuffer(send_cmd_buffer, &begin_info);
 
     VkBufferCopy copy_info = {
-        .size = VK_WHOLE_SIZE,
+        .srcOffset = src_offset,
+        .dstOffset = dst_offset,
+        .size = size,
     };
     vkCmdCopyBuffer(send_cmd_buffer, from, to, 1, &copy_info);
 

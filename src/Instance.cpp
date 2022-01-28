@@ -2,6 +2,7 @@
 #include "VKR.hpp"
 #include "GraphicsDevice.hpp"
 #include "Instance.hpp"
+#include "Surface.hpp"
 
 #include <algorithm>
 #include <ranges>
@@ -22,7 +23,7 @@ VkInstance createInstance(std::span<const char* const> extensions) {
 std::vector<PhysicalDevice> getPhysicalDevices(VkInstance instance) {
     uint32_t count;
     vkEnumeratePhysicalDevices(instance, &count, nullptr);
-    std::vector<VkPhysicalDevice> devices;
+    std::vector<VkPhysicalDevice> devices(count);
     vkEnumeratePhysicalDevices(instance, &count, devices.data()); 
 
     auto v = std::views::transform(
@@ -36,14 +37,27 @@ std::vector<PhysicalDevice> getPhysicalDevices(VkInstance instance) {
 }
 }
 
+namespace Detail {
+struct VkInstanceDeleter {
+    void operator()(VkInstance device) {
+        vkDestroyInstance(device, nullptr);
+    }
+};
+
+using VkInstanceUniqueHandle = std::unique_ptr<
+    std::remove_pointer_t<VkInstance>, VkInstanceDeleter
+>;
+};
+
 struct Instance::Impl {
-    VkInstance instance = VK_NULL_HANDLE;
+    Detail::VkInstanceUniqueHandle instance = VK_NULL_HANDLE;
     std::vector<PhysicalDevice> devices;
+    std::vector<Surface> m_surfaces;
 
     void create(std::span<const char* const> extensions) {
-        instance = createInstance(extensions);
+        instance.reset(createInstance(extensions));
 
-        devices = getPhysicalDevices(instance);
+        devices = getPhysicalDevices(instance.get());
         // TODO: move filtering into getGraphicsDevices
         auto [b, e] = std::ranges::remove_if(
             devices,
@@ -54,25 +68,30 @@ struct Instance::Impl {
         devices.erase(b, e);
     }
 
-    void destroy() {
-        vkDestroyInstance(instance, nullptr);
+    Surface& createSurface(Vulkan::VkSurfaceKHRCreator create_surface) {
+        return m_surfaces.emplace_back(instance.get(), create_surface);
     }
 };
 
-Instance::Instance(std::span<const char* const> extensions):
-    pimpl(std::make_unique<Impl>()) {
-    pimpl->create(extensions);
+Instance::Instance(const InstanceCreationFeatures& conf):
+    pimpl(std::make_unique<Impl>())
+{
+    pimpl->create(conf.wsi_extensions);
 }
 
-Instance::~Instance() {
-    pimpl->destroy();
-}
+Instance::~Instance() = default;
 
 uint32_t Instance::getGraphicsDeviceCount() const {
     return pimpl->devices.size();
 }
 
-const GraphicsDevice& Instance::getGraphicsDevice(uint32_t dev_idx) const {
+GraphicsDevice& Instance::getGraphicsDevice(uint32_t dev_idx) {
     return pimpl->devices[dev_idx];
+}
+
+Vulkan::WSISurface& Vulkan::Instance::createWSISurface(
+    Vulkan::VkSurfaceKHRCreator create_surface
+) {
+    return pimpl->createSurface(create_surface);
 }
 }

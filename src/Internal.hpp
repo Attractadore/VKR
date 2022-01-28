@@ -26,17 +26,4 @@ constexpr std::array srgb_fmts = {
     VK_FORMAT_B8G8R8A8_SRGB,
     VK_FORMAT_R8G8B8A8_SRGB,
 };
-
-class PhysicalDevice;
-class Device;
-class SceneImpl;
-
-struct QueueFamilies {
-    static constexpr uint32_t NotFound = -1;
-    uint32_t graphics = NotFound;
-};
-
-struct Queues {
-    VkQueue graphics = VK_NULL_HANDLE;
-};
 }

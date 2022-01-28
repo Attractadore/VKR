@@ -1,6 +1,9 @@
 #include "GraphicsDevice.hpp"
+#include "Scene.hpp"
+#include "Mesh.hpp"
 
 #include <algorithm>
+#include <cstring>
 
 namespace VKR {
 namespace {
@@ -24,8 +27,11 @@ QueueFamilies findQueueFamilies(VkPhysicalDevice device) {
 }
 
 bool extensionSupported(const char* ext, std::span<const VkExtensionProperties> ext_props) {
-    auto it = std::ranges::find(
-        ext_props, ext,
+    auto it = std::ranges::find_if(
+        ext_props,
+        [&](const char* ext_prop) {
+            return std::strcmp(ext, ext_prop) == 0;
+        },
         [](const VkExtensionProperties& ext_prop) { return ext_prop.extensionName; }
     );
     return it != ext_props.end();
@@ -134,15 +140,8 @@ void Device::create(
         exts.push_back(VK_KHR_SWAPCHAIN_EXTENSION_NAME);
     }
 
-    m_device = createDevice(m_physical_device, m_queue_families, exts);
-    m_queues = findQueues(m_device, m_queue_families); 
-}
-
-void Device::destroy() {
-    if (m_device) {
-        vkDeviceWaitIdle(m_device);
-        vkDestroyDevice(m_device, nullptr);
-    }
+    m_device.reset(createDevice(m_physical_device, m_queue_families, exts));
+    m_queues = findQueues(m_device.get(), m_queue_families); 
 }
 
 SceneImpl& Device::createSceneImpl(
@@ -156,48 +155,9 @@ SceneImpl& Device::createSceneImpl(
     );
 }
 
-bool Device::WSISwapchainPresentModeSupported(
-    VkSurfaceKHR surf, VkPresentModeKHR pmode
-) const {
-    return WSIPresentModeSupported(m_physical_device, surf, pmode);
-}
-
-WSISwapchain& Device::createWSISwapchain(
-    VkSurfaceKHR surf, VkExtent2D ext, VkPresentModeKHR pmode
-) {
-    // TODO: maybe do something to prevent swapchain creation for the
-    // same surface
-    auto& swp = m_wsi_swapchains.emplace_back(
-        m_physical_device, m_queue_families.graphics,
-        m_device, m_queues.graphics,
-        surf
-    );
-    swp.create(ext, pmode);
-    return swp;
-}
-
 Scene& GraphicsDeviceConnection::createScene(
     const Camera& camera, uint32_t width, uint32_t height
 ) {
     return static_cast<Device*>(this)->createSceneImpl(camera, width, height);
-}
-
-bool Vulkan::GraphicsDeviceConnection::WSISwapchainPresentModeSupported(
-    VkSurfaceKHR surf,
-    VkPresentModeKHR pmode
-) const {
-    return static_cast<const Device*>(this)->WSISwapchainPresentModeSupported(
-        surf, pmode
-    );
-}
-
-Vulkan::IWSISwapchain& Vulkan::GraphicsDeviceConnection::createWSISwapchain(
-    VkSurfaceKHR surf,
-    VkExtent2D extent,
-    VkPresentModeKHR pmode
-) {
-    return static_cast<Device*>(this)->createWSISwapchain(
-        surf, extent, pmode
-    );
 }
 }

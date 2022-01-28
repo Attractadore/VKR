@@ -1,5 +1,6 @@
 #include "GraphicsDevice.hpp"
 #include "IDPacking.hpp"
+#include "Internal.hpp"
 #include "Scene.hpp"
 #include "Sync.hpp"
 
@@ -85,7 +86,7 @@ VkRenderPass createRenderPass(
         .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
         .storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE,
         .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        .finalLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        .finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
     };
 
     std::array attachments = {
@@ -173,6 +174,7 @@ VkFramebuffer createFramebuffer(
         .pAttachments = attachments.data(),
         .width = width,
         .height = height,
+        .layers = 1,
     };
 
     VkFramebuffer framebuffer;
@@ -458,7 +460,7 @@ void SceneImpl::draw(Vulkan::ISwapchain* swapchain) {
 
 glm::mat4 SceneImpl::getProj() const {
     auto proj = glm::perspectiveRH_ZO(
-        m_camera.m_hfov, m_camera.m_aspect_ratio,
+        m_camera.m_vfov, m_camera.m_aspect_ratio,
         m_near, m_far
     );
     proj[1][1] = -proj[1][1];
@@ -620,11 +622,12 @@ VkSemaphore SceneImpl::draw(
     VkImage dst_img,
     uint32_t dst_img_width, uint32_t dst_img_height,
     VkSemaphore dst_img_sem,
-    LayoutTransitionToTransferDstInserter to_ins,
-    LayoutTransitionFromTransferDstInserter from_ins
+    Vulkan::LayoutTransitionToTransferDstInserter to_ins,
+    Vulkan::LayoutTransitionFromTransferDstInserter from_ins
 ) {
         VkFence fence = m_fences[m_cur_img];
         vkWaitForFences(m_device, 1, &fence, true, UINT64_MAX);
+        vkResetFences(m_device, 1, &fence);
 
         VkCommandBuffer cmd_buffer = m_cmd_bufs[m_cur_img];
         {

@@ -40,7 +40,7 @@ inline auto createColorImage(
 ) {
     return createImage(
         allocator, format, 0, width, height,
-        VK_IMAGE_USAGE_SAMPLED_BIT |
+        VK_IMAGE_USAGE_TRANSFER_SRC_BIT |
         VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
     );
 }

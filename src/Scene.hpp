@@ -1,15 +1,17 @@
 #pragma once
-#include "VKRVulkan.hpp"
 #include "Image.hpp"
-#include "Internal.hpp"
 #include "Material.hpp"
 #include "Mesh.hpp"
 #include "Model.hpp"
+#include "Queues.hpp"
+#include "VKRVulkan.hpp"
 
 #include <stack>
 #include <vector>
 
 namespace VKR {
+class Device;
+
 class SceneImpl: public VKR::Scene {
     VkInstance m_instance;
 
@@ -72,6 +74,10 @@ public:
         const Device& dev,
         uint32_t width, uint32_t height
     );
+    SceneImpl(const Scene& other) = delete;
+    SceneImpl(Scene&& other);
+    SceneImpl& operator=(const Scene& other) = delete;
+    SceneImpl& operator=(Scene&& other);
 
     ~SceneImpl() {
         destroy();
@@ -120,7 +126,6 @@ public:
 
 private:
     // TODO: enum-based polymorphism sucks
-
     StaticMesh& getStaticMesh(MeshID mesh);
     std::tuple<MeshID, StaticMesh*> getNewStaticMesh();
     MeshID createStaticMesh(std::span<const glm::vec3> vertices);
@@ -163,8 +168,8 @@ private:
         VkImage dst_img,
         uint32_t dst_img_width, uint32_t dst_img_height,
         VkSemaphore dst_img_sem,
-        LayoutTransitionToTransferDstInserter to_ins,
-        LayoutTransitionFromTransferDstInserter from_ins
+        Vulkan::LayoutTransitionToTransferDstInserter to_ins,
+        Vulkan::LayoutTransitionFromTransferDstInserter from_ins
     );
 
     glm::mat4 getProj() const;

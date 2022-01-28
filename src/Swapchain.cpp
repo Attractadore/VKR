@@ -1,9 +1,8 @@
 #include "Internal.hpp"
+#include "Swapchain.hpp"
 #include "Sync.hpp"
-#include "WSISwapchain.hpp"
 
 #include <algorithm>
-#include <cassert>
 
 namespace VKR {
 namespace {
@@ -88,22 +87,7 @@ VkSwapchainKHR createSwapchain(
 }
 }
 
-WSISwapchain::WSISwapchain(
-    VkPhysicalDevice physical_device, uint32_t queue_family,
-    VkDevice device, VkQueue queue,
-    VkSurfaceKHR surf
-): m_physical_device(physical_device),
-   m_queue_family(queue_family),
-   m_device(device),
-   m_queue(queue),
-   m_surface(surf) {}
-
-WSISwapchain::~WSISwapchain() {
-    vkDeviceWaitIdle(m_device);
-    destroy();
-}
-
-void WSISwapchain::create(
+void Swapchain::create(
     VkExtent2D extent, VkPresentModeKHR pmode
 ) {
     VkSurfaceCapabilitiesKHR surf_caps;
@@ -151,7 +135,7 @@ void WSISwapchain::create(
     }
 }
 
-void WSISwapchain::destroy() {
+void Swapchain::destroy() {
     for (auto& fence: m_fences) {
         vkDestroyFence(m_device, fence, nullptr);
     }
@@ -161,34 +145,27 @@ void WSISwapchain::destroy() {
     vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
 }
 
-VkExtent2D WSISwapchain::getExtent() const {
-    return m_extent;
-}
-
-void WSISwapchain::setExtent(VkExtent2D extent) {
+void Swapchain::setExtent(VkExtent2D extent) {
     create(extent, m_pmode);
 }
 
 [[nodiscard]]
-std::tuple<uint32_t, VkSemaphore, VkFence> WSISwapchain::acquireImage() {
+std::tuple<uint32_t, VkSemaphore, VkFence> Swapchain::acquireImage() {
     // TODO: handle VK_ERROR_OUT_OF_DATE_KHR
     uint32_t current_image;
     auto& sem = m_sems[m_current_sync];
     auto& fence = m_fences[m_current_sync];
+    // TODO: fix fences
     vkAcquireNextImageKHR(
         m_device, m_swapchain,
-        UINT64_MAX, sem, fence,
+        UINT64_MAX, sem, VK_NULL_HANDLE,
         &current_image
     );
     m_current_sync = (m_current_sync + 1) % m_sems.size();
     return {current_image, sem, fence};
 }
 
-VkImage WSISwapchain::getImage(uint32_t i) {
-    return m_images[i];
-}
-
-void WSISwapchain::presentImage(uint32_t img_idx, VkSemaphore wait_sem) {
+void Swapchain::presentImage(uint32_t img_idx, VkSemaphore wait_sem) {
     VkPresentInfoKHR present_info = {
         .sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR,
         .waitSemaphoreCount = 1,
@@ -200,7 +177,7 @@ void WSISwapchain::presentImage(uint32_t img_idx, VkSemaphore wait_sem) {
     vkQueuePresentKHR(m_queue, &present_info);
 }
 
-LayoutTransitionToTransferDstInserter WSISwapchain::getLayoutTransitionToTransferDstInserter() {
+Vulkan::LayoutTransitionToTransferDstInserter Swapchain::getLayoutTransitionToTransferDstInserter() {
     auto queue_family = m_queue_family;
     return
     [=](VkCommandBuffer cmd_buffer,
@@ -218,7 +195,7 @@ LayoutTransitionToTransferDstInserter WSISwapchain::getLayoutTransitionToTransfe
     };
 }
 
-LayoutTransitionFromTransferDstInserter WSISwapchain::getLayoutTransitionFromTransferDstInserter() {
+Vulkan::LayoutTransitionFromTransferDstInserter Swapchain::getLayoutTransitionFromTransferDstInserter() {
     auto queue_family = m_queue_family;
     return
     [=](
@@ -237,19 +214,11 @@ LayoutTransitionFromTransferDstInserter WSISwapchain::getLayoutTransitionFromTra
     };
 }
 
-bool WSISwapchain::presentModeSupported(VkPresentModeKHR pmode) {
-    return WSIPresentModeSupported(m_physical_device, m_surface, pmode);
-}
-
-VkPresentModeKHR WSISwapchain::getPresentMode() const {
-    return m_pmode;
-}
-
-void WSISwapchain::setPresentMode(VkPresentModeKHR pmode) {
+void Swapchain::setPresentMode(VkPresentModeKHR pmode) {
     create(m_extent, pmode);
 }
 
-bool WSIPresentModeSupported(
+bool presentModeSupported(
     VkPhysicalDevice pdev, VkSurfaceKHR surf, VkPresentModeKHR pmode
 ) {
     uint32_t pmode_cnt;

@@ -1,19 +1,33 @@
 #pragma once
 #include "Scene.hpp"
-#include "VKRVulkan.hpp"
-#include "WSISwapchain.hpp"
+
+#include <memory>
 
 namespace VKR {
+class PhysicalDevice;
+class Device;
+
+namespace Detail {
+struct DeviceHandleDeleter {
+    void operator()(VkDevice device) {
+        vkDeviceWaitIdle(device);
+        vkDestroyDevice(device, nullptr);
+    }
+};
+
+using VkDeviceUniqueHandle = std::unique_ptr<
+    std::remove_pointer_t<VkDevice>, DeviceHandleDeleter
+>;
+}
 
 class Device: public Vulkan::GraphicsDeviceConnection {
     VkInstance m_instance = VK_NULL_HANDLE;
     VkPhysicalDevice m_physical_device = VK_NULL_HANDLE;
     QueueFamilies m_queue_families;
-    VkDevice m_device = VK_NULL_HANDLE;
+    Detail::VkDeviceUniqueHandle m_device = VK_NULL_HANDLE;
     Queues m_queues;
 
     std::vector<SceneImpl> m_scenes;
-    std::vector<WSISwapchain> m_wsi_swapchains;
 
 public:
     Device(
@@ -21,15 +35,9 @@ public:
         const GraphicsDeviceConnectionFeatures& conf
     );
 
-    ~Device() {
-        destroy();
-    }
-
     void create(
         const GraphicsDeviceConnectionFeatures& conf
     );
-
-    void destroy();
 
     VkInstance getInstance() const {
         return m_instance;
@@ -44,7 +52,7 @@ public:
     }
 
     VkDevice getDevice() const {
-        return m_device;
+        return m_device.get();
     }
 
     const Queues& getQueues() const {
@@ -58,12 +66,6 @@ public:
     bool WSISwapchainPresentModeSupported(
         VkSurfaceKHR surf, VkPresentModeKHR pmode
     ) const;
-
-    WSISwapchain& createWSISwapchain(
-        VkSurfaceKHR surf,
-        VkExtent2D extent,
-        VkPresentModeKHR pmode
-    );
 };
 
 class PhysicalDevice: public Vulkan::GraphicsDevice {
