@@ -76,7 +76,9 @@ PhysicalDevice::PhysicalDevice(
 ):
     m_instance(instance),
     m_physical_device(dev),
-    m_queue_families(findQueueFamilies(m_physical_device)) {
+    m_queue_families(findQueueFamilies(m_physical_device))
+{
+    vkGetPhysicalDeviceProperties(m_physical_device, &m_properties);
 }
 
 bool PhysicalDevice::extensionsSupported(std::span<const char* const> exts) const {
@@ -88,12 +90,6 @@ bool PhysicalDevice::extensionsSupported(std::span<const char* const> exts) cons
     return std::ranges::all_of(
         exts, [&](const char* ext) { return ::VKR::extensionSupported(ext, ext_props); }
     );
-}
-
-std::string PhysicalDevice::name() const {
-    VkPhysicalDeviceProperties props;
-    vkGetPhysicalDeviceProperties(m_physical_device, &props);
-    return props.deviceName;
 }
 
 bool PhysicalDevice::presentSupported() const {
@@ -109,7 +105,7 @@ Device& PhysicalDevice::createDevice(
     return m_devices.emplace_back(*this, conf);
 }
 
-std::string GraphicsDevice::name() const {
+const char* GraphicsDevice::name() const {
     return static_cast<const PhysicalDevice*>(this)->name();
 }
 

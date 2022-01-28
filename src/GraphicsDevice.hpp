@@ -73,6 +73,8 @@ class PhysicalDevice: public Vulkan::GraphicsDevice {
     VkPhysicalDevice m_physical_device = VK_NULL_HANDLE;
     QueueFamilies m_queue_families;
 
+    VkPhysicalDeviceProperties m_properties;
+
     std::vector<Device> m_devices;
 
 public:
@@ -107,7 +109,10 @@ public:
 
     bool extensionsSupported(std::span<const char* const> exts) const;
 
-    std::string name() const;
+    const char* name() const {
+        return m_properties.deviceName;
+    }
+
     bool presentSupported() const;
 
     Device& createDevice(

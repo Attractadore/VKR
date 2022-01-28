@@ -3,7 +3,6 @@
 
 #include <memory>
 #include <span>
-#include <string>
 
 namespace VKR {
 namespace Detail {
@@ -82,7 +81,7 @@ protected:
     GraphicsDevice& operator=(GraphicsDevice&& other) = default;
 
 public:
-    std::string name() const;
+    const char* name() const;
     bool presentSupported() const;
 
     GraphicsDeviceConnection& createConnection(
